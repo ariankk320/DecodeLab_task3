@@ -25,7 +25,7 @@ A modern, responsive E-Commerce Product Page built with HTML, CSS, and JavaScrip
 
 ## How to Run
 
-1. Download `week_3.md`
+1. Download `week_3.html`
 2. Open the file in any modern web browser.
 3. Browse products, search, filter, and add items to cart.
 
