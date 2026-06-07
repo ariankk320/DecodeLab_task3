@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopSphere Ultra</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{background:#f4f6f9;transition:.3s;}
+.dark{background:#0f172a;color:white}
+
+/* HEADER */
+header{
+display:flex;justify-content:space-between;align-items:center;
+padding:15px;background:#111827;color:white;flex-wrap:wrap;
+}
+.logo{font-size:22px;font-weight:bold}
+.controls{display:flex;gap:10px;align-items:center}
+input{padding:8px;border-radius:6px;border:none;width:200px}
+button{padding:8px 10px;border:none;border-radius:6px;cursor:pointer}
+
+/* HERO */
+.hero{
+height:220px;overflow:hidden;margin:10px;border-radius:10px;position:relative
+}
+.slide{position:absolute;width:100%;height:100%;opacity:0;transition:.5s}
+.slide.active{opacity:1}
+.slide img{width:100%;height:100%;object-fit:cover}
+
+/* FILTERS */
+.filters{padding:10px}
+.filters button{margin-right:5px}
+
+/* CONTAINER */
+.container{
+display:grid;
+grid-template-columns:1fr 320px;
+gap:15px;padding:15px
+}
+
+/* PRODUCT CARD */
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+}
+.card{
+background:rgba(255,255,255,.8);
+backdrop-filter:blur(10px);
+border-radius:12px;
+padding:10px;
+position:relative;
+transition:.3s;
+}
+.dark .card{background:rgba(30,41,59,.6)}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:150px;object-fit:cover;border-radius:10px}
+
+.price{color:#2563eb;font-weight:bold}
+.badge{position:absolute;top:8px;left:8px;background:red;color:white;padding:3px 7px;border-radius:20px;font-size:11px}
+.wish{position:absolute;top:8px;right:8px;cursor:pointer}
+
+/* CART */
+.cart{
+background:rgba(255,255,255,.8);
+padding:10px;border-radius:10px
+}
+.dark .cart{background:rgba(30,41,59,.6)}
+.cart-item{display:flex;justify-content:space-between;margin:6px 0}
+
+/* MODAL */
+.modal{
+position:fixed;inset:0;background:rgba(0,0,0,.6);
+display:none;align-items:center;justify-content:center;
+}
+.modal-content{
+background:white;padding:20px;border-radius:10px;width:300px
+}
+.dark .modal-content{background:#1e293b}
+
+/* TOAST */
+.toast{
+position:fixed;bottom:20px;right:20px;
+background:black;color:white;padding:10px;border-radius:8px
+}
+
+@media(max-width:800px){
+.container{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">🛒 ShopSphere Ultra</div>
+<div class="controls">
+<input id="search" placeholder="Search products...">
+<button onclick="toggleTheme()">🌙</button>
+<div>🛍 <span id="count">0</span></div>
+</div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+<div class="slide active"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30"></div>
+<div class="slide"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e"></div>
+<div class="slide"><img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32"></div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+<button onclick="filter('all')">All</button>
+<button onclick="filter('electronics')">Electronics</button>
+<button onclick="filter('audio')">Audio</button>
+<button onclick="filter('camera')">Camera</button>
+</div>
+
+<div class="container">
+
+<div class="products" id="products"></div>
+
+<div class="cart">
+<h3>Cart</h3>
+<div id="cart"></div>
+<h4>Total: $<span id="total">0</span></h4>
+<button onclick="checkout()">Checkout</button>
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<h3 id="mname"></h3>
+<p id="mprice"></p>
+<button onclick="closeModal()">Close</button>
+</div>
+</div>
+
+<script>
+const products=[
+{id:1,name:"Headphones",price:120,img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e",cat:"audio",sale:true,rating:4},
+{id:2,name:"Smart Watch",price:180,img:"https://images.unsplash.com/photo-1523275335684-37898b6baf30",cat:"electronics",sale:false,rating:5},
+{id:3,name:"Laptop",price:950,img:"https://images.unsplash.com/photo-1496181133206-80ce9b88a853",cat:"electronics",sale:true,rating:4},
+{id:4,name:"Camera",price:600,img:"https://images.unsplash.com/photo-1516035069371-29a1b244cc32",cat:"camera",sale:false,rating:5},
+{id:5,name:"Speaker",price:90,img:"https://images.unsplash.com/photo-1589003077984-894e133dabab",cat:"audio",sale:true,rating:4},
+{id:6,name:"Gaming Mouse",price:50,img:"https://images.unsplash.com/photo-1527814050087-3793815479db",cat:"electronics",sale:false,rating:4},
+{id:7,name:"Keyboard",price:70,img:"https://images.unsplash.com/photo-1587829741301-dc798b83add3",cat:"electronics",sale:true,rating:5},
+{id:8,name:"Drone",price:300,img:"https://images.unsplash.com/photo-1508615070457-7baeba4003b8",cat:"camera",sale:true,rating:4},
+{id:9,name:"VR Headset",price:400,img:"https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac",cat:"electronics",sale:false,rating:5},
+{id:10,name:"Tripod",price:40,img:"https://images.unsplash.com/photo-1580910051074-3eb694886505",cat:"camera",sale:false,rating:4},
+{id:11,name:"Microphone",price:110,img:"https://images.unsplash.com/photo-1589903308904-1010c2294adc",cat:"audio",sale:true,rating:5},
+{id:12,name:"Action Camera",price:250,img:"https://images.unsplash.com/photo-1502920917128-1aa500764cbd",cat:"camera",sale:true,rating:4}
+];
+
+let cart=JSON.parse(localStorage.getItem("cart"))||[];
+let theme=localStorage.getItem("theme")||"light";
+let wishlist=JSON.parse(localStorage.getItem("wish"))||[];
+
+document.body.className=theme;
+
+function render(list){
+let box=document.getElementById("products");
+box.innerHTML="";
+list.forEach(p=>{
+box.innerHTML+=`
+<div class="card">
+${p.sale?'<div class="badge">SALE</div>':''}
+<div class="wish" onclick="wish(${p.id})">❤️</div>
+<img src="${p.img}">
+<h4>${p.name}</h4>
+<div>⭐ ${p.rating}</div>
+<div class="price">$${p.price}</div>
+<button onclick="add(${p.id})">Add</button>
+<button onclick="openModal(${p.id})">View</button>
+</div>`;
+});
+}
+
+function add(id){
+let p=products.find(x=>x.id===id);
+let item=cart.find(c=>c.id===id);
+if(item)item.qty++; else cart.push({...p,qty:1});
+save();
+toast("Added to cart");
+}
+
+function wish(id){
+if(!wishlist.includes(id)) wishlist.push(id);
+save();
+toast("Added to wishlist ❤️");
+}
+
+function save(){
+localStorage.setItem("cart",JSON.stringify(cart));
+localStorage.setItem("wish",JSON.stringify(wishlist));
+update();
+}
+
+function update(){
+document.getElementById("count").innerText=cart.length;
+let box=document.getElementById("cart");
+box.innerHTML="";
+let total=0;
+cart.forEach(i=>{
+total+=i.price*i.qty;
+box.innerHTML+=`
+<div class="cart-item">
+<span>${i.name} x${i.qty}</span>
+<span>$${i.price*i.qty}</span>
+</div>`;
+});
+document.getElementById("total").innerText=total;
+}
+
+function filter(cat){
+render(cat==="all"?products:products.filter(p=>p.cat===cat));
+}
+
+document.getElementById("search").addEventListener("keyup",e=>{
+let val=e.target.value.toLowerCase();
+render(products.filter(p=>p.name.toLowerCase().includes(val)));
+});
+
+function openModal(id){
+let p=products.find(x=>x.id===id);
+document.getElementById("mname").innerText=p.name;
+document.getElementById("mprice").innerText="$"+p.price;
+document.getElementById("modal").style.display="flex";
+}
+
+function closeModal(){
+document.getElementById("modal").style.display="none";
+}
+
+function toggleTheme(){
+theme=theme==="light"?"dark":"light";
+document.body.className=theme;
+localStorage.setItem("theme",theme);
+}
+
+function toast(msg){
+let t=document.createElement("div");
+t.className="toast";
+t.innerText=msg;
+document.body.appendChild(t);
+setTimeout(()=>t.remove(),2000);
+}
+
+function checkout(){
+alert("Order placed!");
+cart=[];
+save();
+}
+
+setInterval(()=>{
+let s=document.querySelectorAll(".slide");
+let i=[...s].findIndex(x=>x.classList.contains("active"));
+s[i].classList.remove("active");
+s[(i+1)%s.length].classList.add("active");
+},3000);
+
+render(products);
+update();
+</script>
+
+</body>
+</html>
